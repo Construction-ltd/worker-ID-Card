@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Worker ID Cards</title>
+
+<style>
+body {
+    font-family: "Poppins", sans-serif;
+    background: #e6ebef;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.card {
+    width: 320px;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 2px solid #0b3d91;
+    overflow: hidden;
+}
+
+.header {
+    background: #0b3d91;
+    text-align: center;
+    padding: 20px 10px 30px;
+}
+
+.header img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #fff;
+    object-fit: cover;
+    border: 3px solid #ffffff;
+}
+
+.header h2 {
+    color: #ffffff;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.section {
+    padding: 15px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.photo-box, .qr-box {
+    width: 100px;
+    height: 100px;
+    border: 2px dashed #0b3d91;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #0b3d91;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.photo-box img,
+.qr-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info {
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.info span {
+    font-weight: bold;
+    color: #0b3d91;
+}
+
+.footer {
+    background: #0b3d91;
+    text-align: center;
+    padding: 6px;
+}
+
+.footer p {
+    color: #fff;
+    font-size: 11px;
+    margin: 0;
+}
+</style>
+</head>
+
+<body>
+
+<script>
+// Google Sheet CSV link
+const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRy3aLmeKl-0pdkVjaD-KNwGk4jGO9Pzw1HnLgwKGjwJqquggHwfyQNyxeaUNIY7Lkx88oEZOdlKDgt/pub?gid=0&single=true&output=csv";
+
+fetch(sheetCSV)
+    .then(response => response.text())
+    .then(data => {
+        const rows = data.trim().split('\n');
+        const headers = rows[0].split(',');
+
+        for (let i = 1; i < rows.length; i++) {
+            if(!rows[i].trim()) continue;
+            const cols = rows[i].split(',');
+
+            const workerID    = cols[0]; // Worker ID
+            const workerName  = cols[1]; // Name
+            const designation = cols[2]; // Designation
+            const qrData      = cols[3]; // Column D for QR code
+            const photoURL    = cols[4] || ""; // Optional photo URL
+
+            // Generate QR code using API
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrData)}`;
+
+            document.body.insertAdjacentHTML("beforeend", `
+                <div class="card">
+                    <div class="header">
+                        <img src="https://i.ibb.co/b5F7MVpV/sohanur-Construction-logi-removebg-preview.png" alt="Sohanur Construction Logo">
+                        <h2>Sohanur Construction & Manpower Solution</h2>
+                    </div>
+                    <div class="section">
+                        <div class="row">
+                            <div class="photo-box">
+                                ${photoURL ? `<img src="${photoURL}" alt="Photo">` : "Passport Photo"}
+                            </div>
+                            <div class="qr-box">
+                                <img src="${qrLink}" alt="QR Code">
+                            </div>
+                        </div>
+                        <div class="info">
+                            <p><span>ID:</span> ${workerID}</p>
+                            <p><span>Name:</span> ${workerName}</p>
+                            <p><span>Designation:</span> ${designation}</p>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p>Construction Worker ID Card</p>
+                    </div>
+                </div>
+            `);
+        }
+    })
+    .catch(error => console.error("Error loading CSV:", error));
+</script>
+
+</body>
+</html>
