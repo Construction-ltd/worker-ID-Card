@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Worker ID Cards</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
 body {
@@ -12,8 +13,16 @@ body {
     padding: 20px;
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 30px;
     justify-content: center;
+}
+
+/* Card container to hold card + button */
+.card-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
 /* Card style */
@@ -74,6 +83,7 @@ body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    background: #f9f9f9;
 }
 
 .photo-box img,
@@ -106,7 +116,6 @@ body {
     margin: 0;
 }
 
-/* Signature */
 .signature {
     margin-top: 10px;
     text-align: right;
@@ -116,17 +125,27 @@ body {
     color: #0b3d91;
 }
 
+/* Download Button Style */
+.download-btn {
+    background: #059669;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.download-btn:hover { background: #047857; }
+
 /* Print styles */
 @media print {
-    body {
-        padding: 0;
-        gap: 0;
-        justify-content: flex-start;
-    }
-    .card {
-        page-break-inside: avoid;
-        margin: 10px;
-    }
+    .download-btn { display: none; }
+    body { padding: 0; gap: 0; }
+    .card { page-break-inside: avoid; margin: 10px; }
 }
 </style>
 </head>
@@ -134,60 +153,76 @@ body {
 <body>
 
 <script>
-// Google Sheet CSV link
 const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRy3aLmeKl-0pdkVjaD-KNwGk4jGO9Pzw1HnLgwKGjwJqquggHwfyQNyxeaUNIY7Lkx88oEZOdlKDgt/pub?gid=0&single=true&output=csv";
 
 fetch(sheetCSV)
     .then(response => response.text())
     .then(data => {
         const rows = data.trim().split('\n');
-        const headers = rows[0].split(',');
-
         for (let i = 1; i < rows.length; i++) {
             if(!rows[i].trim()) continue;
             const cols = rows[i].split(',');
 
-            const workerID    = cols[0]; // Worker ID
-            const workerName  = cols[1]; // Name
-            const designation = cols[2]; // Designation
-            const qrData      = cols[3]; // Column D for QR code
-            const photoURL    = cols[4] || ""; // Optional photo URL
+            const workerID    = cols[0].trim();
+            const workerName  = cols[1].trim();
+            const designation = cols[2].trim();
+            const qrData      = cols[3].trim();
+            const photoURL    = cols[4] ? cols[4].trim() : "";
 
-            // Generate QR code
-            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrData)}`;
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
 
-            document.body.insertAdjacentHTML("beforeend", `
-                <div class="card">
-                    <div class="header">
-                        <img src="https://i.ibb.co/b5F7MVpV/sohanur-Construction-logi-removebg-preview.png" alt="Sohanur Construction Logo">
-                        <h2>Sohanur Construction & Manpower Solution</h2>
-                    </div>
-                    <div class="section">
-                        <div class="row">
-                            <div class="photo-box">
-                                ${photoURL ? `<img src="${photoURL}" alt="Photo">` : "Passport Photo"}
+            const cardHTML = `
+                <div class="card-container">
+                    <div class="card" id="card-${workerID}">
+                        <div class="header">
+                            <img src="https://scontent.fcgp4-2.fna.fbcdn.net/v/t39.30808-6/605243562_908002708456468_4393973484981407834_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGlOhCWlvFFn-rSxXAxrYeXFalWBXYMbn8VqVYFdgxuf2bdlA_oZdUCRdnWJNqTLDlCbf116j8ZfWV61JH2zPE0&_nc_ohc=HSMMN4vEXEQQ7kNvwFwWN-A&_nc_oc=Adl8C_CNbT0BY9k22YInwOHJH8AR7Ty75zFul8FTDenntPBetaua3XiaWaIGOHIW9fY&_nc_zt=23&_nc_ht=scontent.fcgp4-2.fna&_nc_gid=D5oFgGY8uQc5sIbzm6Ck_Q&oh=00_Afl3L2jsFROgyGfoUSlr5aENPXhTd3JNm-8tq4GML9zGIg&oe=6957FB4C" alt="Logo" crossOrigin="anonymous">
+                            <h2>Sohanur Construction & Manpower Solution</h2>
+                        </div>
+                        <div class="section">
+                            <div class="row">
+                                <div class="photo-box">
+                                    ${photoURL ? `<img src="${photoURL}" alt="Photo" crossOrigin="anonymous">` : "Passport Photo"}
+                                </div>
+                                <div class="qr-box">
+                                    <img src="${qrLink}" alt="QR" crossOrigin="anonymous">
+                                </div>
                             </div>
-                            <div class="qr-box">
-                                <img src="${qrLink}" alt="QR Code">
+                            <div class="info">
+                                <p><span>ID:</span> ${workerID}</p>
+                                <p><span>Name:</span> ${workerName}</p>
+                                <p><span>Designation:</span> ${designation}</p>
                             </div>
+                            <div class="signature">Managing Director</div>
                         </div>
-                        <div class="info">
-                            <p><span>ID:</span> ${workerID}</p>
-                            <p><span>Name:</span> ${workerName}</p>
-                            <p><span>Designation:</span> ${designation}</p>
-                        </div>
-                        <div class="signature">
-                             Managing Director
+                        <div class="footer">
+                            <p>Construction Worker ID Card</p>
                         </div>
                     </div>
-                    <div class="footer">
-                        <p>Construction Worker ID Card</p>
-                    </div>
+                    <button class="download-btn" onclick="downloadCard('${workerID}')">
+                        <i class="fas fa-download"></i> Download ${workerID}.png
+                    </button>
                 </div>
-            `);
+            `;
+            document.body.insertAdjacentHTML("beforeend", cardHTML);
         }
     })
     .catch(error => console.error("Error loading CSV:", error));
+
+// Function to Download Card as PNG
+function downloadCard(id) {
+    const cardElement = document.getElementById(`card-${id}`);
+    
+    html2canvas(cardElement, {
+        useCORS: true, // Allows loading images from external URLs
+        scale: 2,      // Better quality
+        backgroundColor: null
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${id}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+}
 </script>
 
 </body>
